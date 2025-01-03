@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Laboral 2025</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 10px;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+        .month {
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .month-name {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .day {
+            text-align: center;
+            padding: 5px;
+            border: 1px solid #eee;
+        }
+        .work-day {
+            background-color: yellow;
+        }
+        .rest-day {
+            background-color: lightgreen;
+        }
+        .shift-change {
+            background-color: #c4e667;
+        }
+        .vacation-day {
+            background-color: #ff9999;
+        }
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .vacation-form {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .vacation-form input[type="date"] {
+            padding: 5px;
+        }
+        .vacation-form button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .vacation-form button:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 768px) {
+            .legend {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Calendario Laboral 2025</h1>
+    <div class="vacation-form">
+        <label for="start-date">Inicio de vacaciones:</label>
+        <input type="date" id="start-date" min="2025-01-01" max="2025-12-31">
+        <label for="end-date">Fin de vacaciones:</label>
+        <input type="date" id="end-date" min="2025-01-01" max="2025-12-31">
+        <button onclick="addVacation()">Agregar vacaciones</button>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: yellow;"></div>
+            <span>Día de trabajo</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: lightgreen;"></div>
+            <span>Día de descanso</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #c4e667;"></div>
+            <span>Último día de descanso (turno comienza a las 23:00)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #ff9999;"></div>
+            <span>Vacaciones</span>
+        </div>
+    </div>
+    <script>
+        let vacationPeriods = [];
+
+        function createCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendarEl.innerHTML = ''; // Limpiar el calendario existente
+            const startDate = new Date(2025, 0, 1);
+            const endDate = new Date(2025, 11, 31);
+            const cycleStart = new Date(2025, 0, 5, 23, 0, 0); // 5 de enero a las 23:00
+            const cycleDuration = 9; // 6 días de trabajo + 3 días de descanso
+
+            const months = [
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+            ];
+            const daysOfWeek = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
+
+            for (let month = 0; month < 12; month++) {
+                const monthEl = document.createElement('div');
+                monthEl.className = 'month';
+
+                const monthNameEl = document.createElement('div');
+                monthNameEl.className = 'month-name';
+                monthNameEl.textContent = months[month];
+                monthEl.appendChild(monthNameEl);
+
+                const daysEl = document.createElement('div');
+                daysEl.className = 'days';
+
+                // Agregar los nombres de los días de la semana
+                daysOfWeek.forEach(day => {
+                    const dayNameEl = document.createElement('div');
+                    dayNameEl.className = 'day';
+                    dayNameEl.textContent = day;
+                    daysEl.appendChild(dayNameEl);
+                });
+
+                const firstDay = new Date(2025, month, 1);
+                const lastDay = new Date(2025, month + 1, 0);
+
+                // Agregar espacios en blanco para los días antes del primer día del mes
+                for (let i = 0; i < (firstDay.getDay() + 6) % 7; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'day';
+                    daysEl.appendChild(emptyDay);
+                }
+
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const date = new Date(2025, month, day);
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'day';
+                    dayEl.textContent = day;
+
+                    const timeDiff = date.getTime() - cycleStart.getTime();
+                    const daysSinceCycleStart = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                    const dayInCycle = daysSinceCycleStart % cycleDuration;
+
+                    if (isVacationDay(date)) {
+                        dayEl.classList.add('vacation-day');
+                    } else if (dayInCycle === 8) {
+                        dayEl.classList.add('shift-change');
+                    } else if (dayInCycle < 6) {
+                        dayEl.classList.add('work-day');
+                    } else {
+                        dayEl.classList.add('rest-day');
+                    }
+
+                    daysEl.appendChild(dayEl);
+                }
+
+                monthEl.appendChild(daysEl);
+                calendarEl.appendChild(monthEl);
+            }
+        }
+
+        function isVacationDay(date) {
+            return vacationPeriods.some(period => 
+                date >= period.start && date <= period.end
+            );
+        }
+
+        function addVacation() {
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+            
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                alert('Por favor, selecciona fechas válidas para tus vacaciones.');
+                return;
+            }
+            
+            if (startDate > endDate) {
+                alert('La fecha de inicio debe ser anterior o igual a la fecha de fin.');
+                return;
+            }
+            
+            vacationPeriods.push({ start: startDate, end: endDate });
+            createCalendar(); // Recrear el calendario con las nuevas vacaciones
+        }
+
+        document.addEventListener('DOMContentLoaded', createCalendar);
+    </script>
+</body>
+</html>
